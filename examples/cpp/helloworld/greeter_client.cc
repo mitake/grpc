@@ -46,6 +46,21 @@ using helloworld::HelloRequest;
 using helloworld::HelloReply;
 using helloworld::Greeter;
 
+class MyCustomAuthenticator : public grpc::MetadataCredentialsPlugin {
+public:
+  MyCustomAuthenticator(const grpc::string& ticket) : ticket_(ticket) {}
+
+  grpc::Status GetMetadata(grpc::string_ref service_url, grpc::string_ref method_name,
+			   const grpc::AuthContext& channel_auth_context,
+			   std::multimap<grpc::string, grpc::string>* metadata) override {
+    metadata->insert(std::make_pair("x-custom-auth-ticket", ticket_));
+    return grpc::Status::OK;
+  }
+
+private:
+  grpc::string ticket_;
+};
+
 class GreeterClient {
  public:
   GreeterClient(std::shared_ptr<Channel> channel)
@@ -72,7 +87,7 @@ class GreeterClient {
     if (status.ok()) {
       return reply.message();
     } else {
-      return "RPC failed";
+      return "RPC failed: " + status.error_message();
     }
   }
 
@@ -85,8 +100,13 @@ int main(int argc, char** argv) {
   // are created. This channel models a connection to an endpoint (in this case,
   // localhost at port 50051). We indicate that the channel isn't authenticated
   // (use of InsecureChannelCredentials()).
+
+  auto channel_cred = grpc::InsecureChannelCredentials();
+  auto call_creds = grpc::MetadataCredentialsFromPlugin(std::unique_ptr<grpc::MetadataCredentialsPlugin>(new MyCustomAuthenticator("super-secret-ticket")));
+  auto composed_cred = CompositeChannelCredentials(channel_cred, call_creds);
+
   GreeterClient greeter(grpc::CreateChannel(
-      "localhost:50051", grpc::InsecureChannelCredentials()));
+      "localhost:50051", composed_cred));
   std::string user("world");
   std::string reply = greeter.SayHello(user);
   std::cout << "Greeter received: " << reply << std::endl;
