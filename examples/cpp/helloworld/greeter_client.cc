@@ -337,8 +337,10 @@ int main(int argc, char** argv) {
   auto call_creds = grpc::MetadataCredentialsFromPlugin(std::unique_ptr<grpc::MetadataCredentialsPlugin>(new MyCustomAuthenticator("super-secret-ticket")));
   auto composed_cred = CompositeChannelCredentials(channel_cred, call_creds);
 
-  GreeterClient greeter(grpc::CreateChannel(
-      "localhost:50051", composed_cred));
+  grpc::ChannelArguments channel_args;
+  channel_args.SetSslTargetNameOverride("foo.test.google.fr");
+  GreeterClient greeter(grpc::CreateCustomChannel(
+						  "0.0.0.0:50051", composed_cred, channel_args));
   std::string user("world");
   std::string reply = greeter.SayHello(user);
   std::cout << "Greeter received: " << reply << std::endl;
