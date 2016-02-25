@@ -283,6 +283,13 @@ public:
 		 OutputMetadata* consumed_auth_metadata,
 		 OutputMetadata* response_metadata) {
     std::cout << "MyAuthMetadataProcessor::Process() called\n";
+    for (auto meta: auth_metadata) {
+      std::cout << "first: " << meta.first << ", second: " << meta.second << "\n";
+    }
+    // auto vals = auth_metadata.find("super-secret-ticket");
+    // for (auto val: vals) {
+    //   cout << val << "\n";
+    // }
     return Status::OK;
   }
 };
