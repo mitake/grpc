@@ -345,5 +345,8 @@ int main(int argc, char** argv) {
   std::string reply = greeter.SayHello(user);
   std::cout << "Greeter received: " << reply << std::endl;
 
+  reply = greeter.SayHello(user);
+  std::cout << "Greeter received: " << reply << std::endl;
+
   return 0;
 }
